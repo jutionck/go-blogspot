@@ -4,13 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jutionck/code-run-2022/model"
+	"github.com/jutionck/code-run-2022/utils"
 	"io"
 	"net/http"
 )
 
 func (h *Handler) BlogPostList(w http.ResponseWriter, r *http.Request) {
 	posts := make([]*model.BlogSpot, 0)
-	err := h.db.Find(&posts).Error
+	page := utils.UrlQuery(r, "page")
+	size := utils.UrlQuery(r, "size")
+	offset, limit := utils.Pagination(page, size)
+	err := h.db.Limit(limit).Offset(offset).Find(&posts).Error
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, err := fmt.Fprint(w, err)
@@ -56,6 +60,30 @@ func (h *Handler) BlogPostCreate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(payload)
+	if err != nil {
+		_, err := fmt.Fprint(w, err)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
+}
+
+func (h *Handler) BlogPostGet(w http.ResponseWriter, r *http.Request) {
+	var post model.BlogSpot
+	postID := utils.UrlParams(r, "id")
+	err := h.db.First(&post, postID).Error
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, err := fmt.Fprint(w, err)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(post)
 	if err != nil {
 		_, err := fmt.Fprint(w, err)
 		if err != nil {

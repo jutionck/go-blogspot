@@ -21,6 +21,7 @@ func main() {
 	r.Use(middleware.Logger)
 
 	r.Get("/posts", h.BlogPostList)
+	r.Get("/posts/{id}", h.BlogPostGet)
 	r.Post("/posts", h.BlogPostCreate)
 
 	port := os.Getenv("PORT")
